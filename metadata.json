@@ -1,0 +1,6 @@
+{
+  "name": "یارا — دستیار هوشمند رایگان",
+  "description": "دستیار هوش مصنوعی همه‌کاره، رایگان و قابل نصب روی موبایل (PWA) با جستجوی زنده وب، تحلیل تصویر و فایل، ورودی صوتی و پاسخ گویا.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
