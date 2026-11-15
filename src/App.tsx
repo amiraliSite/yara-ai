@@ -1072,7 +1072,7 @@ export default function App() {
           onClick={() => setIsDrawerOpen(false)}
         >
           <div
-            className="h-full w-[82%] max-w-xs shadow-2xl"
+            className="h-dvh w-[85%] max-w-[320px] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <SidebarContent
@@ -1095,16 +1095,16 @@ export default function App() {
       )}
 
       {/* Main Workspace */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <OfflineIndicator />
 
         {/* Compact Top Bar (<= 56px on mobile) */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-3 sm:px-6 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
-          <div className="flex items-center gap-2 min-w-0">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white/90 px-2.5 sm:px-6 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <button
               type="button"
               onClick={() => setIsDrawerOpen(true)}
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
+              className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
               aria-label="باز کردن منو"
             >
               <Menu className="h-5 w-5" />
@@ -1117,36 +1117,37 @@ export default function App() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <div className="lg:hidden">
               <PWAInstallButton variant="compact" />
             </div>
             <button
               type="button"
               onClick={handleNewChat}
-              className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-teal-700 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-500 whitespace-nowrap shrink-0"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-teal-700 px-2.5 sm:px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-500 whitespace-nowrap shrink-0"
             >
               <Plus className="h-4 w-4 shrink-0" />
-              <span>گفتگوی جدید</span>
+              <span className="sm:hidden">جدید</span>
+              <span className="hidden sm:inline">گفتگوی جدید</span>
             </button>
           </div>
         </header>
 
         {/* Scrollable Message Canvas */}
-        <main className="flex-1 overflow-y-auto px-3 py-5 sm:px-6">
-          <div className="mx-auto max-w-3xl">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 sm:px-6 sm:py-5">
+          <div className="mx-auto min-w-0 max-w-3xl">
             {activeSession.messages.length === 0 ? (
-              <div className="py-6 sm:py-12">
+              <div className="py-3 sm:py-10">
                 <div className="mx-auto max-w-xl text-center">
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white [text-wrap:balance]">
+                  <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white [text-wrap:balance]">
                     سلام {user.fullName}، چطور کمکت کنم؟
                   </h1>
-                  <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
-                    جستجوی زنده وب با ذکر منبع · تحلیل عکس و فایل · ورودی صوتی · ذخیره خودکار در حساب شخصی
+                  <p className="mt-2.5 sm:mt-3 text-xs sm:text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    جستجوی زنده وب با ذکر منبع · تحلیل عکس و فایل · ورودی صوتی · ذخیره خودکار
                   </p>
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="mt-5 sm:mt-8 grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
                   {QUICK_STARTERS.map((item) => {
                     const Icon = item.icon;
                     return (
@@ -1179,8 +1180,8 @@ export default function App() {
 
                   if (isUser) {
                     return (
-                      <div key={msg.id} className="flex justify-start">
-                        <div className="max-w-[88%] sm:max-w-[78%] rounded-2xl rounded-tr-sm bg-teal-700 px-4 py-3 text-white dark:bg-teal-700">
+                      <div key={msg.id} className="flex min-w-0 justify-start">
+                        <div className="min-w-0 max-w-[90%] sm:max-w-[78%] overflow-hidden rounded-2xl rounded-tr-sm bg-teal-700 px-3.5 py-2.5 sm:px-4 sm:py-3 text-white dark:bg-teal-700">
                           {msg.attachments && msg.attachments.length > 0 && (
                             <div className="mb-2.5 flex flex-wrap gap-2">
                               {msg.attachments.map((att) =>
@@ -1190,7 +1191,7 @@ export default function App() {
                                     src={att.previewUrl}
                                     alt={att.name}
                                     referrerPolicy="no-referrer"
-                                    className="h-28 w-28 rounded-xl object-cover border border-white/20"
+                                    className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover border border-white/20"
                                   />
                                 ) : (
                                   <div
@@ -1205,7 +1206,7 @@ export default function App() {
                             </div>
                           )}
                           {msg.text && (
-                            <p className="whitespace-pre-wrap text-[15px] leading-[1.7]">{msg.text}</p>
+                            <p className="whitespace-pre-wrap [overflow-wrap:anywhere] text-[15px] leading-[1.7]">{msg.text}</p>
                           )}
                           <div className="mt-1.5 text-[11px] text-teal-100/80 tabular-nums">
                             {timeStr}
@@ -1218,7 +1219,7 @@ export default function App() {
                   return (
                     <article
                       key={msg.id}
-                      className={`rounded-2xl border p-4 sm:p-5 ${
+                      className={`min-w-0 overflow-hidden rounded-2xl border p-3.5 sm:p-5 ${
                         msg.isError
                           ? "border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30"
                           : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
@@ -1273,11 +1274,11 @@ export default function App() {
                       )}
 
                       {msg.text && !msg.isError && (
-                        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                        <div className="mt-3.5 flex flex-wrap items-center gap-1.5 sm:gap-2 border-t border-slate-100 pt-2.5 sm:pt-3 dark:border-slate-800">
                           <button
                             type="button"
                             onClick={() => handleCopyMessage(msg.id, msg.text)}
-                            className="flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                            className="flex min-h-[40px] sm:min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                           >
                             {copiedId === msg.id ? (
                               <Check className="h-3.5 w-3.5 text-teal-600" />
@@ -1291,7 +1292,7 @@ export default function App() {
                             type="button"
                             onClick={() => handlePlayTTS(msg)}
                             disabled={ttsLoadingId === msg.id}
-                            className="flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                            className="flex min-h-[40px] sm:min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                           >
                             {ttsLoadingId === msg.id ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1312,7 +1313,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => handleSaveNote(msg)}
-                            className="flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                            className="flex min-h-[40px] sm:min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                           >
                             {savedNoteMsgId === msg.id ? (
                               <Check className="h-3.5 w-3.5 text-teal-600" />
@@ -1349,18 +1350,18 @@ export default function App() {
         </main>
 
         {/* Thumb-Zone Composer */}
-        <footer className="shrink-0 border-t border-slate-200 bg-white/95 px-3 pt-2.5 pb-safe sm:px-6 dark:border-slate-800 dark:bg-slate-900/95">
-          <div className="mx-auto max-w-3xl space-y-2.5">
+        <footer className="shrink-0 border-t border-slate-200 bg-white/95 px-2.5 pt-2 pb-safe sm:px-6 sm:pt-2.5 dark:border-slate-800 dark:bg-slate-900/95">
+          <div className="mx-auto min-w-0 max-w-3xl space-y-2">
             {statusError && (
               <div className="flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{statusError}</span>
+                  <span className="[overflow-wrap:anywhere]">{statusError}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setStatusError(null)}
-                  className="p-1 hover:opacity-75"
+                  className="p-1 shrink-0 hover:opacity-75"
                   aria-label="بستن خطا"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -1369,9 +1370,9 @@ export default function App() {
             )}
 
             {/* Mode Segmented Bar + Web Search Toggle */}
-            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5">
+            <div className="flex items-center justify-between gap-1.5 sm:gap-2">
               <div
-                className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+                className="no-scrollbar flex min-w-0 flex-1 sm:flex-initial items-center gap-0.5 sm:gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
                 role="tablist"
                 aria-label="حالت دستیار"
               >
@@ -1385,7 +1386,7 @@ export default function App() {
                       aria-selected={active}
                       title={opt.description}
                       onClick={() => handleModeChange(opt.id)}
-                      className={`min-h-[34px] rounded-lg px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                      className={`min-h-[34px] flex-1 sm:flex-initial rounded-lg px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                         active
                           ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
                           : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
@@ -1402,14 +1403,15 @@ export default function App() {
                 onClick={() => setUseWebSearch((v) => !v)}
                 aria-pressed={useWebSearch}
                 title={currentModeInfo.description}
-                className={`flex min-h-[36px] items-center gap-1.5 rounded-xl border px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                className={`flex min-h-[36px] items-center gap-1 sm:gap-1.5 rounded-xl border px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
                   useWebSearch
                     ? "border-teal-600/40 bg-teal-50 text-teal-800 dark:border-teal-500/40 dark:bg-teal-950/50 dark:text-teal-300"
                     : "border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
                 }`}
               >
                 <Globe className="h-3.5 w-3.5 shrink-0" />
-                <span>{useWebSearch ? "جستجوی وب روشن" : "جستجوی وب خاموش"}</span>
+                <span className="sm:hidden">{useWebSearch ? "وب روشن" : "وب خاموش"}</span>
+                <span className="hidden sm:inline">{useWebSearch ? "جستجوی وب روشن" : "جستجوی وب خاموش"}</span>
               </button>
             </div>
 
@@ -1447,7 +1449,7 @@ export default function App() {
             )}
 
             {/* Main Composer Box */}
-            <div className="relative flex items-end gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 focus-within:border-teal-600 dark:border-slate-700 dark:bg-slate-800/70 dark:focus-within:border-teal-500">
+            <div className="relative flex items-end gap-1 sm:gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 p-1 sm:p-1.5 focus-within:border-teal-600 dark:border-slate-700 dark:bg-slate-800/70 dark:focus-within:border-teal-500">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1466,7 +1468,7 @@ export default function App() {
               />
 
               {showAttachMenu && (
-                <div className="absolute right-0 bottom-14 z-30 w-52 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                <div className="absolute right-0 bottom-15 z-30 w-52 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900">
                   <button
                     type="button"
                     onClick={() => cameraInputRef.current?.click()}
@@ -1489,7 +1491,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setShowAttachMenu((v) => !v)}
-                className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-200/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700"
+                className="flex min-h-[44px] min-w-[40px] sm:min-w-[44px] shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-200/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700"
                 aria-label="پیوست عکس یا فایل"
                 title="ارسال عکس، دوربین یا فایل"
               >
@@ -1500,7 +1502,7 @@ export default function App() {
                 type="button"
                 onClick={startOrStopRecording}
                 disabled={isTranscribing}
-                className={`flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl transition-colors ${
+                className={`flex min-h-[44px] min-w-[40px] sm:min-w-[44px] shrink-0 items-center justify-center rounded-xl transition-colors ${
                   isRecording
                     ? "bg-rose-600 text-white hover:bg-rose-700"
                     : "text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700"
@@ -1525,19 +1527,19 @@ export default function App() {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   isRecording
-                    ? `در حال ضبط صدا (${recordSeconds} ثانیه)... برای توقف بزنید`
+                    ? `در حال ضبط صدا (${recordSeconds} ثانیه)...`
                     : isTranscribing
                       ? "در حال تبدیل صدا به متن..."
-                      : "هر سوالی داری بپرس، لینک بده یا عکس بفرست..."
+                      : "پیام خود را بنویسید..."
                 }
-                className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 px-1 text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+                className="max-h-36 min-h-[44px] min-w-0 flex-1 resize-none bg-transparent py-2.5 px-1 text-[16px] sm:text-[15px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
               />
 
               {isGenerating ? (
                 <button
                   type="button"
                   onClick={handleStopGenerating}
-                  className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition-colors hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900"
+                  className="flex min-h-[44px] min-w-[42px] sm:min-w-[44px] shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition-colors hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900"
                   aria-label="توقف پاسخ"
                   title="توقف"
                 >
@@ -1548,7 +1550,7 @@ export default function App() {
                   type="button"
                   onClick={() => handleSend()}
                   disabled={!input.trim() && attachments.length === 0}
-                  className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white transition-colors hover:bg-teal-800 disabled:bg-slate-300 disabled:text-slate-500 dark:bg-teal-600 dark:hover:bg-teal-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
+                  className="flex min-h-[44px] min-w-[42px] sm:min-w-[44px] shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white transition-colors hover:bg-teal-800 disabled:bg-slate-300 disabled:text-slate-500 dark:bg-teal-600 dark:hover:bg-teal-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
                   aria-label="ارسال پیام"
                 >
                   <Send className="h-4.5 w-4.5" />
