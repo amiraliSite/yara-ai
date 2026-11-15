@@ -41,6 +41,14 @@ import { MarkdownRenderer } from "./components/MarkdownRenderer";
 import { AuthScreen } from "./components/AuthScreen";
 import { Splash3DLoader } from "./components/Splash3DLoader";
 import { apiFetch, getStoredToken, setStoredToken } from "./lib/api";
+import {
+  generateStaticBrowserReply,
+  isNonJsonStaticResponse,
+  isStaticHostMode,
+  markStaticHostMode,
+  staticGetCurrentUser,
+  staticLogoutUser,
+} from "./lib/staticEngine";
 
 const STORAGE_USER_KEY = "yara_ai_cached_user_v1";
 const STORAGE_THEME_KEY = "yara_ai_theme_v1";
@@ -218,20 +226,24 @@ export default function App() {
       // ignore cache parse errors
     }
 
+    if (isStaticHostMode()) {
+      return;
+    }
+
     try {
       const [chatsRes, notesRes] = await Promise.all([
         apiFetch("/api/chats"),
         apiFetch("/api/notes"),
       ]);
 
-      if (chatsRes.ok) {
+      if (chatsRes.ok && !isNonJsonStaticResponse(chatsRes)) {
         const chatsData = (await chatsRes.json()) as { sessions?: ChatSession[] };
         if (Array.isArray(chatsData.sessions) && chatsData.sessions.length > 0) {
           setSessions(chatsData.sessions);
           setActiveSessionId(chatsData.sessions[0].id);
         }
       }
-      if (notesRes.ok) {
+      if (notesRes.ok && !isNonJsonStaticResponse(notesRes)) {
         const notesData = (await notesRes.json()) as { notes?: SavedNote[] };
         if (Array.isArray(notesData.notes)) {
           setNotes(notesData.notes);
@@ -246,8 +258,27 @@ export default function App() {
     let cancelled = false;
 
     async function checkSession() {
+      if (isStaticHostMode()) {
+        const localUser = staticGetCurrentUser();
+        if (!cancelled && localUser) {
+          setUser(localUser);
+          await hydrateFromServer(localUser);
+        }
+        if (!cancelled) setAuthChecking(false);
+        return;
+      }
+
       try {
         const res = await apiFetch("/api/auth/me");
+        if (isNonJsonStaticResponse(res)) {
+          markStaticHostMode(true);
+          const localUser = staticGetCurrentUser();
+          if (!cancelled && localUser) {
+            setUser(localUser);
+            await hydrateFromServer(localUser);
+          }
+          return;
+        }
         if (res.ok) {
           const data = (await res.json()) as { user?: UserProfile };
           if (!cancelled && data.user) {
@@ -335,10 +366,14 @@ export default function App() {
       abortControllerRef.current?.abort();
       setIsGenerating(false);
     }
-    try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // ignore
+    if (isStaticHostMode()) {
+      staticLogoutUser();
+    } else {
+      try {
+        await apiFetch("/api/auth/logout", { method: "POST" });
+      } catch {
+        // ignore
+      }
     }
     setStoredToken(null);
     localStorage.removeItem(STORAGE_USER_KEY);
@@ -363,6 +398,8 @@ export default function App() {
     setActiveSessionId(fresh.id);
     setAttachments([]);
     setStatusError(null);
+
+    if (isStaticHostMode()) return;
 
     try {
       await apiFetch("/api/chats", {
@@ -389,6 +426,8 @@ export default function App() {
       return remaining;
     });
 
+    if (isStaticHostMode()) return;
+
     try {
       await apiFetch(`/api/chats/${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch {
@@ -403,6 +442,7 @@ export default function App() {
     } else if (mode === "live") {
       setUseWebSearch(true);
     }
+    if (isStaticHostMode()) return;
     try {
       await apiFetch(`/api/chats/${encodeURIComponent(activeSession.id)}`, {
         method: "PATCH",
@@ -462,6 +502,53 @@ export default function App() {
       if (recordTimerRef.current) {
         window.clearInterval(recordTimerRef.current);
         recordTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (isStaticHostMode()) {
+      const SpeechRec =
+        (window as unknown as { SpeechRecognition?: new () => unknown; webkitSpeechRecognition?: new () => unknown })
+          .SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: new () => unknown }).webkitSpeechRecognition;
+
+      if (!SpeechRec) {
+        setStatusError("تبدیل گفتار سرور در نسخه استاتیک GitHub Pages فعال نیست و مرورگر شما از تشخیص گفتار بومی پشتیبانی نمی‌کند.");
+        return;
+      }
+
+      try {
+        const rec = new SpeechRec() as {
+          lang: string;
+          interimResults: boolean;
+          maxAlternatives: number;
+          onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+          onerror: (() => void) | null;
+          onend: (() => void) | null;
+          start: () => void;
+        };
+        rec.lang = "fa-IR";
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        setIsTranscribing(true);
+        rec.onresult = (event) => {
+          const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+          if (transcript) {
+            setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+            textareaRef.current?.focus();
+          }
+        };
+        rec.onerror = () => {
+          setStatusError("امکان دریافت صدا در مرورگر وجود نداشت.");
+          setIsTranscribing(false);
+        };
+        rec.onend = () => {
+          setIsTranscribing(false);
+        };
+        rec.start();
+      } catch {
+        setIsTranscribing(false);
+        setStatusError("امکان شروع ورودی صوتی مرورگر وجود نداشت.");
       }
       return;
     }
@@ -589,9 +676,49 @@ export default function App() {
       messages: [...s.messages, userMsg, placeholderAssistant],
     }));
 
+    const currentAttachments = [...attachments];
     if (!overrideText) setInput("");
     setAttachments([]);
     setIsGenerating(true);
+
+    const runStaticReply = async () => {
+      const reply = await generateStaticBrowserReply(
+        textToSend,
+        currentAttachments,
+        activeSession.messages
+      );
+      updateSession(targetSessionId, (s) => ({
+        ...s,
+        updatedAt: Date.now(),
+        messages: s.messages.map((m) =>
+          m.id === assistantMsgId
+            ? {
+                ...m,
+                text: reply.text,
+                sources: reply.sources.length > 0 ? reply.sources : undefined,
+              }
+            : m
+        ),
+      }));
+    };
+
+    if (isStaticHostMode()) {
+      try {
+        await runStaticReply();
+      } catch {
+        updateSession(targetSessionId, (s) => ({
+          ...s,
+          messages: s.messages.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, text: "خطایی در پردازش مرورگر رخ داد. لطفاً دوباره تلاش کنید.", isError: true }
+              : m
+          ),
+        }));
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
+    }
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -613,6 +740,12 @@ export default function App() {
 
       if (response.status === 401) {
         await handleLogout();
+        return;
+      }
+
+      if (isNonJsonStaticResponse(response) && !response.headers.get("content-type")?.includes("text/event-stream")) {
+        markStaticHostMode(true);
+        await runStaticReply();
         return;
       }
 
@@ -733,6 +866,8 @@ export default function App() {
     setSavedNoteMsgId(msg.id);
     setTimeout(() => setSavedNoteMsgId(null), 2000);
 
+    if (isStaticHostMode()) return;
+
     try {
       await apiFetch("/api/notes", {
         method: "POST",
@@ -746,6 +881,7 @@ export default function App() {
 
   const handleDeleteNote = async (noteId: string) => {
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    if (isStaticHostMode()) return;
     try {
       await apiFetch(`/api/notes/${encodeURIComponent(noteId)}`, { method: "DELETE" });
     } catch {
@@ -767,17 +903,19 @@ export default function App() {
       messages: s.messages.filter((m) => m.id !== errorMsgId && m.id !== prevUserMsg.id),
     }));
 
-    try {
-      await Promise.all([
-        apiFetch(`/api/chats/${encodeURIComponent(activeSession.id)}/messages/${encodeURIComponent(errorMsgId)}`, {
-          method: "DELETE",
-        }),
-        apiFetch(`/api/chats/${encodeURIComponent(activeSession.id)}/messages/${encodeURIComponent(prevUserMsg.id)}`, {
-          method: "DELETE",
-        }),
-      ]);
-    } catch {
-      // ignore
+    if (!isStaticHostMode()) {
+      try {
+        await Promise.all([
+          apiFetch(`/api/chats/${encodeURIComponent(activeSession.id)}/messages/${encodeURIComponent(errorMsgId)}`, {
+            method: "DELETE",
+          }),
+          apiFetch(`/api/chats/${encodeURIComponent(activeSession.id)}/messages/${encodeURIComponent(prevUserMsg.id)}`, {
+            method: "DELETE",
+          }),
+        ]);
+      } catch {
+        // ignore
+      }
     }
 
     setTimeout(() => {
@@ -809,11 +947,17 @@ export default function App() {
     setStatusError(null);
 
     try {
+      if (isStaticHostMode()) {
+        throw new Error("STATIC_TTS_FALLBACK");
+      }
       const response = await apiFetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: msg.text }),
       });
+      if (isNonJsonStaticResponse(response)) {
+        throw new Error("STATIC_TTS_FALLBACK");
+      }
       const data = (await response.json()) as {
         audioBase64?: string;
         mimeType?: string;
