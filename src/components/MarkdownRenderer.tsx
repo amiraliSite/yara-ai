@@ -38,7 +38,7 @@ const CodeBlock: React.FC<{ className?: string; children: React.ReactNode }> = (
           <span>{copied ? "کپی شد" : "کپی"}</span>
         </button>
       </div>
-      <pre className="overflow-x-auto p-3.5 text-[13px] leading-relaxed font-mono">
+      <pre className="max-w-full overflow-x-auto p-3 sm:p-3.5 text-[12.5px] sm:text-[13px] leading-relaxed font-mono">
         <code>{codeText}</code>
       </pre>
     </div>
@@ -47,11 +47,11 @@ const CodeBlock: React.FC<{ className?: string; children: React.ReactNode }> = (
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
   return (
-    <div className="prose-container space-y-2.5 text-[15px] leading-[1.75] text-slate-800 dark:text-slate-100">
+    <div className="prose-container min-w-0 max-w-full [overflow-wrap:anywhere] space-y-2.5 text-[15px] leading-[1.75] text-slate-800 dark:text-slate-100">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          p: ({ children }) => <p className="leading-[1.75]">{children}</p>,
+          p: ({ children }) => <p className="leading-[1.75] [overflow-wrap:anywhere]">{children}</p>,
           h1: ({ children }) => (
             <h1 className="mt-4 mb-2 text-lg font-bold text-slate-900 dark:text-white">{children}</h1>
           ),
@@ -80,8 +80,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
             </blockquote>
           ),
           table: ({ children }) => (
-            <div className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-              <table className="w-full border-collapse text-right text-sm tabular-nums">{children}</table>
+            <div className="my-3 max-w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table className="w-full border-collapse text-right text-xs sm:text-sm tabular-nums">{children}</table>
             </div>
           ),
           th: ({ children }) => (
