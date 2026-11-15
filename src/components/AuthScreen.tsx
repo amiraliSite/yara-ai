@@ -129,14 +129,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-dvh w-full flex-col overflow-x-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       {/* Compact Top Bar */}
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white/90 px-4 sm:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white/90 px-3 sm:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90">
         <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap shrink-0">
           یارا
         </span>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <PWAInstallButton variant="compact" />
           <button
             type="button"
@@ -150,11 +150,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto flex w-full max-w-5xl flex-1 items-center px-4 py-8 sm:px-8">
-        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 items-center px-3 py-4 sm:px-8 sm:py-8">
+        <div className="grid w-full grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 lg:items-stretch">
           {/* Form Column */}
-          <section className="lg:col-span-6 flex flex-col justify-center rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-6">
+          <section className="min-w-0 lg:col-span-6 flex flex-col justify-center rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4.5 sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-5 sm:mb-6">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white [text-wrap:balance]">
                 {mode === "login" ? "ورود به حساب کاربری" : "ساخت حساب جدید"}
               </h1>
@@ -226,7 +226,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="مثلاً علی رضایی"
-                    className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
+                    className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-[16px] sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
                   />
                 </div>
               )}
@@ -247,7 +247,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-left text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
+                  className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-left text-[16px] sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="حداقل ۶ کاراکتر"
-                    className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-3.5 text-left text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
+                    className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-3.5 text-left text-[16px] sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
                   />
                   <button
                     type="button"
@@ -298,7 +298,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="رمز عبور را دوباره بنویسید"
-                    className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-left text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
+                    className="min-h-[46px] w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-left text-[16px] sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:bg-slate-900"
                   />
                 </div>
               )}
@@ -324,17 +324,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           </section>
 
           {/* Editorial Feature Showcase Column */}
-          <aside className="lg:col-span-6 flex flex-col justify-between rounded-3xl border border-slate-200 bg-slate-900 p-6 sm:p-8 text-slate-100 dark:border-slate-800">
+          <aside className="min-w-0 lg:col-span-6 flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200 bg-slate-900 p-5 sm:p-8 text-slate-100 dark:border-slate-800">
             <div>
               <div className="text-xs font-medium text-teal-400">دستیار هوشمند شخصی</div>
-              <h2 className="mt-2 text-2xl font-bold leading-snug text-white [text-wrap:balance]">
+              <h2 className="mt-2 text-xl sm:text-2xl font-bold leading-snug text-white [text-wrap:balance]">
                 همه گفتگوها، یادداشت‌ها و تحلیل‌هایت در یک حساب امن
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                با ثبت‌نام در یارا، تمام تاریخچه چت‌ها، منابع وب و یادداشت‌های مهمت روی دیتابیس سرور ذخیره می‌شن تا از موبایل یا کامپیوتر همیشه بهشون دسترسی داشته باشی.
+              <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm leading-relaxed text-slate-300">
+                با ثبت‌نام در یارا، تمام تاریخچه چت‌ها، منابع وب و یادداشت‌های مهمت ذخیره می‌شن تا از موبایل یا کامپیوتر همیشه بهشون دسترسی داشته باشی.
               </p>
 
-              <div className="mt-8 space-y-5 border-t border-slate-800 pt-6">
+              <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-5 border-t border-slate-800 pt-5 sm:pt-6">
                 <div className="flex items-start gap-3.5">
                   <Globe className="mt-0.5 h-5 w-5 shrink-0 text-teal-400" />
                   <div>
