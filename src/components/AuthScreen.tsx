@@ -13,6 +13,13 @@ import {
 } from "lucide-react";
 import type { UserProfile } from "../types";
 import { apiFetch, setStoredToken } from "../lib/api";
+import {
+  isNonJsonStaticResponse,
+  isStaticHostMode,
+  markStaticHostMode,
+  staticLoginUser,
+  staticRegisterUser,
+} from "../lib/staticEngine";
 import { PWAInstallButton } from "./PWAInstallButton";
 
 interface AuthScreenProps {
@@ -68,6 +75,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
     setIsSubmitting(true);
     try {
+      const authenticateLocally = async () => {
+        const result =
+          mode === "register"
+            ? await staticRegisterUser(fullName.trim(), cleanEmail, password)
+            : await staticLoginUser(cleanEmail, password);
+        setStoredToken(result.token);
+        onAuthenticated(result.user);
+      };
+
+      if (isStaticHostMode()) {
+        await authenticateLocally();
+        return;
+      }
+
       const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
       const payload =
         mode === "register"
@@ -80,11 +101,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         body: JSON.stringify(payload),
       });
 
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        throw new Error(
-          "این نسخه روی هاست استاتیک (مانند GitHub Pages) اجرا شده و سرور بک‌اند و دیتابیس روی آن فعال نیست. برای ورود، ثبت‌نام و چت زنده با هوش مصنوعی، باید به سرور اصلی برنامه متصل شوید."
-        );
+      if (isNonJsonStaticResponse(response)) {
+        markStaticHostMode(true);
+        await authenticateLocally();
+        return;
       }
 
       const data = (await response.json()) as {
