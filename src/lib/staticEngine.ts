@@ -275,94 +275,171 @@ async function searchWikipediaCors(
     }));
 }
 
+function decodeAttachmentText(att: Attachment): string | null {
+  if (!att.data) return null;
+  if (!att.mimeType.startsWith("text/") && att.mimeType !== "application/json") return null;
+  try {
+    const bin = atob(att.data);
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    return new TextDecoder("utf-8").decode(bytes).slice(0, 12000);
+  } catch {
+    return null;
+  }
+}
+
+function buildStaticSystemPrompt(
+  mode: AssistantMode,
+  useWebSearch: boolean,
+  userName?: string,
+  wikiContext?: string
+): string {
+  const today = new Date().toLocaleDateString("fa-IR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const parts = [
+    `تو «یارا» هستی؛ یک دستیار هوش مصنوعی فارسی‌زبانِ واقعی، دقیق، باسواد، صمیمی و همه‌کاره. تاریخ امروز: ${today}.`,
+    userName ? `نام کاربر: ${userName}.` : "",
+    "قوانین مهم:",
+    "۱. همیشه با هویت «یارا» صحبت کن و هرگز نام مدل یا شرکت دیگری را به عنوان سازنده خودت نیاور.",
+    "۲. طبیعی، روان، ساختارمند و کاربردی پاسخ بده (برای کدنویسی از بلوک کد استاندارد و برای توضیحات از تیتر و بولت مرتب استفاده کن).",
+    "۳. اگر از چیزی مطمئن نیستی یا اطلاع لحظه‌ای در اختیار نداری، صادقانه بگو و اطلاعات ساختگی تولید نکن.",
+  ];
+
+  if (mode === "deep") {
+    parts.push("حالت گفتگو: تحلیل عمیق و مهندسی. مسئله را گام‌به‌گام بررسی کن و کد یا راه‌حل کامل ارائه بده.");
+  } else if (mode === "translate") {
+    parts.push("حالت گفتگو: مترجم و ویراستار حرفه‌ای. متن را روان، دقیق و طبیعی ترجمه یا ویرایش کن.");
+  } else if (mode === "general") {
+    parts.push("حالت گفتگو: دستیار سریع. پاسخ کوتاه، شفاف و مستقیم بده.");
+  } else {
+    parts.push("حالت گفتگو: همه‌کاره و جامع با استفاده از منابع معتبر در دسترس.");
+  }
+
+  if (useWebSearch && wikiContext) {
+    parts.push(
+      `منابع دانشنامه‌ای زنده زیر برای کمک به دقت پاسخ پیدا شده‌اند (در صورت مرتبط بودن از آن‌ها استفاده کن):\n\n${wikiContext}`
+    );
+  }
+
+  return parts.filter(Boolean).join("\n");
+}
+
 export async function generateStaticBrowserReply(
   prompt: string,
   attachments: Attachment[],
-  _history: ChatMessage[]
+  history: ChatMessage[],
+  options?: {
+    mode?: AssistantMode;
+    useWebSearch?: boolean;
+    userName?: string;
+    signal?: AbortSignal;
+  }
 ): Promise<{ text: string; sources: GroundingSource[] }> {
   const clean = prompt.trim();
+  const mode = options?.mode || "live";
+  const useWebSearch = options?.useWebSearch ?? true;
   const sources: GroundingSource[] = [];
 
-  // 1. Date / Time quick answers
-  if (/تاریخ|امروز چندم|ساعت چنده|چند شنبه/.test(clean) && clean.length < 45) {
-    const now = new Date();
-    const faDate = now.toLocaleDateString("fa-IR", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const faTime = now.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
-    return {
-      text: `امروز **${faDate}** و ساعت اکنون **${faTime}** است.`,
-      sources,
-    };
-  }
-
-  // 2. Greeting quick answer
-  if (/^(سلام|درود|سلام رفیق|خوبی|چطوری|hi|hello)[\s!؟?]*$/i.test(clean)) {
-    return {
-      text: "سلام! خوش اومدی. در حال حاضر اپلیکیشن در **حالت مرورگر (GitHub Pages)** اجرا شده؛ تمام حساب، گفتگوها و یادداشت‌های شما به‌صورت محلی در مرورگر ذخیره می‌شوند و پاسخ‌های دانشنامه‌ای به‌صورت زنده از ویکی‌پدیا دریافت می‌شوند.\n\nهر موضوعی می‌خوای بپرس (مثلاً «هوش مصنوعی چیه؟»، محاسبه ریاضی یا تاریخ امروز).",
-      sources,
-    };
-  }
-
-  // 3. Arithmetic check
-  const mathAns = trySafeArithmetic(clean);
-  if (mathAns) {
-    return { text: mathAns, sources };
-  }
-
-  // 4. Local attachment inspection
-  const attachmentNotes: string[] = [];
-  for (const att of attachments) {
-    if (att.data && (att.mimeType.startsWith("text/") || att.mimeType === "application/json")) {
-      try {
-        const bin = atob(att.data);
-        const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-        const decoded = new TextDecoder("utf-8").decode(bytes).slice(0, 1200);
-        attachmentNotes.push(`**پیش‌نمایش فایل «${att.name}»:**\n\`\`\`\n${decoded}\n\`\`\``);
-      } catch {
-        attachmentNotes.push(`فایل متنی **${att.name}** دریافت شد.`);
-      }
-    } else {
-      attachmentNotes.push(`فایل رسانه‌ای **${att.name}** (${att.mimeType}) در گفتگوی مرورگر پیوست شد.`);
-    }
-  }
-
-  // 5. Live CORS Wikipedia search (Persian first, then English if needed)
-  if (clean.length >= 2) {
+  // Fetch optional live Wikipedia grounding context when web search is enabled and query is informative
+  let wikiContext = "";
+  const isShortGreeting = /^(سلام|درود|خوبی|چطوری|hi|hello)[\s!؟?]*$/i.test(clean);
+  if (useWebSearch && clean.length >= 3 && !isShortGreeting) {
     try {
       const faResults = await searchWikipediaCors("fa", clean);
       const enResults = faResults.length > 0 ? [] : await searchWikipediaCors("en", clean);
-      const combined = [...faResults, ...enResults];
-
+      const combined = [...faResults, ...enResults].slice(0, 2);
       if (combined.length > 0) {
-        const blocks = combined.slice(0, 2).map((item) => {
-          sources.push({ title: `${item.title} — Wikipedia`, uri: item.uri });
-          return `### ${item.title}\n${item.extract}`;
-        });
-
-        const prefix = attachmentNotes.length > 0 ? `${attachmentNotes.join("\n\n")}\n\n` : "";
-        return {
-          text: `${prefix}${blocks.join("\n\n---\n\n")}\n\n> *پاسخ زنده از ویکی‌پدیا در حالت استاتیک GitHub Pages دریافت شد. برای تحلیل کامل فایل، کدنویسی پیشرفته و استریم Gemini باید سرور Node.js فعال باشد.*`,
-          sources,
-        };
+        wikiContext = combined
+          .map((item) => {
+            sources.push({ title: `${item.title} — Wikipedia`, uri: item.uri });
+            return `عنوان: ${item.title}\nلینک: ${item.uri}\nخلاصه: ${item.extract.slice(0, 800)}`;
+          })
+          .join("\n\n---\n\n");
       }
     } catch {
-      // fall through gracefully
+      // ignore search error and continue with LLM
     }
   }
 
-  if (attachmentNotes.length > 0) {
-    return {
-      text: `${attachmentNotes.join("\n\n")}\n\n> *در نسخه استاتیک GitHub Pages پردازش عمیق فایل و مدل Gemini سرور در دسترس نیست؛ برای تحلیل کامل با هوش مصنوعی از نسخه سروری برنامه استفاده کنید.*`,
-      sources,
-    };
+  // Format attachments into prompt text
+  const attachmentTextParts: string[] = [];
+  for (const att of attachments) {
+    const decoded = decodeAttachmentText(att);
+    if (decoded) {
+      attachmentTextParts.push(`[محتوای فایل ${att.name}]:\n\`\`\`\n${decoded}\n\`\`\``);
+    } else {
+      attachmentTextParts.push(
+        `[پیوست رسانه‌ای ارسال‌شده توسط کاربر: ${att.name} (${att.mimeType}) — توجه: در این لحظه ابزار تحلیل مستقیم پیکسل تصویر فعال نیست؛ اگر کاربر درباره محتوای عکس پرسید، صادقانه اطلاع بده.]`
+      );
+    }
+  }
+
+  const userContent = [clean, ...attachmentTextParts].filter(Boolean).join("\n\n") || "سلام";
+
+  const recentHistory = history
+    .filter((m) => !m.isError && m.text.trim().length > 0)
+    .slice(-10)
+    .map((m) => ({
+      role: m.role === "model" ? ("assistant" as const) : ("user" as const),
+      content: m.text.slice(0, 4000),
+    }));
+
+  const messages = [
+    {
+      role: "system" as const,
+      content: buildStaticSystemPrompt(mode, useWebSearch, options?.userName, wikiContext),
+    },
+    ...recentHistory,
+    { role: "user" as const, content: userContent },
+  ];
+
+  // Primary free CORS AI completion endpoint (keyless)
+  try {
+    const response = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "openai-fast",
+        messages,
+        temperature: mode === "deep" || mode === "translate" ? 0.3 : 0.7,
+      }),
+      signal: options?.signal ?? AbortSignal.timeout(25000),
+    });
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const aiText = data.choices?.[0]?.message?.content?.trim();
+      if (aiText) {
+        return { text: aiText, sources };
+      }
+    }
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
+    // fall through to offline/arithmetic/wiki fallback
+  }
+
+  // Fallback if AI endpoint temporarily unreachable
+  const mathAns = trySafeArithmetic(clean);
+  if (mathAns) return { text: mathAns, sources };
+
+  if (wikiContext) {
+    const readable = wikiContext
+      .replace(/عنوان: /g, "### ")
+      .replace(/لینک: [^\n]+\n/g, "")
+      .replace(/خلاصه: /g, "");
+    return { text: readable, sources };
   }
 
   return {
-    text: "این نسخه روی **GitHub Pages (حالت استاتیک مرورگر)** اجرا شده است؛ به همین دلیل مدل هوش مصنوعی Gemini سرور در دسترس نیست.\n\n- برای سوال‌های دانشنامه‌ای می‌توانید عنوان یا کلیدواژه دقیق‌تری بنویسید تا مستقیماً از **ویکی‌پدیای فارسی/انگلیسی** برایتان جستجو شود.\n- تمام چت‌ها و یادداشت‌های شما همچنان در مرورگر ذخیره می‌شوند.",
-    sources,
+    text: "در این لحظه ارتباط با سرویس هوش مصنوعی با اختلال موقت مواجه شد. لطفاً چند ثانیه دیگر دوباره امتحان کنید.",
+    sources: [],
   };
 }
