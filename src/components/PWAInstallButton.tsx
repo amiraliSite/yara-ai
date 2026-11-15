@@ -37,11 +37,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ variant = "c
         <button
           type="button"
           onClick={handleClick}
-          className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
+          className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
           title="نصب روی صفحه اصلی موبایل"
         >
           {isInstallable ? <Download className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" /> : <Smartphone className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0" />}
-          <span>{isInstallable ? "نصب اپ" : "نصب موبایل"}</span>
+          <span className="hidden sm:inline">{isInstallable ? "نصب اپ" : "نصب موبایل"}</span>
+          <span className="sm:hidden">نصب</span>
         </button>
       )}
 
@@ -51,7 +52,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ variant = "c
           onClick={() => setShowGuide(false)}
         >
           <div
-            className="w-full max-w-md rounded-t-3xl sm:rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
+            className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-slate-200 bg-white p-5 pb-safe sm:p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
