@@ -136,13 +136,11 @@ export const Splash3DLoader: React.FC<Splash3DLoaderProps> = ({
     scene.background = new THREE.Color(0x060b13);
     scene.fog = new THREE.FogExp2(0x060b13, 0.055);
 
-    const camera = new THREE.PerspectiveCamera(
-      44,
-      container.clientWidth / Math.max(1, container.clientHeight),
-      0.1,
-      100
-    );
-    camera.position.set(0, 0.35, 7.6);
+    const initAspect = container.clientWidth / Math.max(1, container.clientHeight);
+    const camera = new THREE.PerspectiveCamera(44, initAspect, 0.1, 100);
+    const getResponsiveZ = (aspect: number) =>
+      aspect < 0.9 ? Math.min(12.2, (7.6 / Math.max(aspect, 0.48)) * 0.76) : 7.6;
+    camera.position.set(0, 0.35, getResponsiveZ(initAspect));
     camera.lookAt(0, 0, 0);
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
@@ -361,7 +359,9 @@ export const Splash3DLoader: React.FC<Splash3DLoaderProps> = ({
       if (!container) return;
       const w = container.clientWidth;
       const h = Math.max(1, container.clientHeight);
-      camera.aspect = w / h;
+      const aspect = w / h;
+      camera.aspect = aspect;
+      camera.position.z = getResponsiveZ(aspect);
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
@@ -482,7 +482,7 @@ export const Splash3DLoader: React.FC<Splash3DLoaderProps> = ({
       )}
 
       {/* Top Minimal Brand Header */}
-      <header className="relative z-10 flex items-center justify-between px-6 pt-6 sm:px-10">
+      <header className="relative z-10 flex items-center justify-between px-4 pt-5 sm:px-10 sm:pt-6">
         <span className="text-lg font-bold tracking-tight text-white">یارا</span>
         <span className="text-xs text-slate-400 tabular-nums">دستیار هوشمند واقعی</span>
       </header>
@@ -491,11 +491,11 @@ export const Splash3DLoader: React.FC<Splash3DLoaderProps> = ({
       <div className="pointer-events-none relative z-10 flex-1" />
 
       {/* Bottom Clean HUD Dock */}
-      <footer className="relative z-10 mx-auto w-full max-w-md px-6 pb-8 sm:pb-10">
-        <div className="rounded-2xl border border-white/10 bg-[#0B1220]/90 p-5">
-          <div className="flex items-center justify-between gap-4 text-xs">
-            <span className="font-medium text-slate-200">{stageText}</span>
-            <span className="font-mono text-teal-400 tabular-nums">{progress}%</span>
+      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-safe sm:px-6 sm:pb-10">
+        <div className="rounded-2xl border border-white/10 bg-[#0B1220]/90 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="truncate font-medium text-slate-200">{stageText}</span>
+            <span className="font-mono text-teal-400 tabular-nums shrink-0">{progress}%</span>
           </div>
 
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
@@ -506,13 +506,13 @@ export const Splash3DLoader: React.FC<Splash3DLoaderProps> = ({
           </div>
 
           <div className="mt-4 flex items-center justify-between gap-3">
-            <span className="text-[11px] text-slate-400">
-              جستجوی زنده · تحلیل تصویر و صدا · ذخیره ابری
+            <span className="text-[11px] leading-snug text-slate-400">
+              جستجوی زنده · تحلیل تصویر و صدا
             </span>
             <button
               type="button"
               onClick={finish}
-              className="flex min-h-[40px] items-center gap-1.5 rounded-xl bg-teal-600 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-teal-500 whitespace-nowrap shrink-0"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-teal-500 whitespace-nowrap shrink-0"
             >
               <span>ورود</span>
               <ArrowLeft className="h-3.5 w-3.5" />
