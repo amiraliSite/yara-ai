@@ -390,6 +390,33 @@ async function startServer() {
   getDb();
 
   const app = express();
+  const allowedOrigins = (process.env.CORS_ORIGIN || "https://amiralisite.github.io")
+    .split(",")
+    .map((o) => o.trim().toLowerCase())
+    .filter(Boolean);
+
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      const normalized = origin.toLowerCase();
+      const isLocal =
+        normalized.startsWith("http://localhost:") ||
+        normalized.startsWith("http://127.0.0.1:");
+      if (isLocal || allowedOrigins.includes("*") || allowedOrigins.includes(normalized)) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Vary", "Origin");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      }
+    }
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+
   app.use(express.json({ limit: "20mb" }));
 
   app.get("/api/health", (_req, res) => {
