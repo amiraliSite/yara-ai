@@ -681,11 +681,20 @@ export default function App() {
     setAttachments([]);
     setIsGenerating(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const runStaticReply = async () => {
       const reply = await generateStaticBrowserReply(
         textToSend,
         currentAttachments,
-        activeSession.messages
+        activeSession.messages,
+        {
+          mode: modeToUse,
+          useWebSearch: overrideMode ? overrideMode === "live" || overrideMode === "deep" : useWebSearch,
+          userName: user?.fullName,
+          signal: controller.signal,
+        }
       );
       updateSession(targetSessionId, (s) => ({
         ...s,
@@ -705,23 +714,23 @@ export default function App() {
     if (isStaticHostMode()) {
       try {
         await runStaticReply();
-      } catch {
-        updateSession(targetSessionId, (s) => ({
-          ...s,
-          messages: s.messages.map((m) =>
-            m.id === assistantMsgId
-              ? { ...m, text: "خطایی در پردازش مرورگر رخ داد. لطفاً دوباره تلاش کنید.", isError: true }
-              : m
-          ),
-        }));
+      } catch (err) {
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          updateSession(targetSessionId, (s) => ({
+            ...s,
+            messages: s.messages.map((m) =>
+              m.id === assistantMsgId
+                ? { ...m, text: "خطایی در دریافت پاسخ رخ داد. لطفاً دوباره تلاش کنید.", isError: true }
+                : m
+            ),
+          }));
+        }
       } finally {
         setIsGenerating(false);
+        abortControllerRef.current = null;
       }
       return;
     }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
 
     try {
       const response = await apiFetch("/api/chat", {
